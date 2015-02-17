@@ -1,0 +1,722 @@
+% Modeling Issue Definitions using Quantitative Text Analysis
+
+\begin{abstract}
+\noindent Issue definitions, the way policy issues are understood, have been an
+important component for understanding the policymaking process for
+decades. In this article, I develop a model of issue definitions based on the 
+assumption that policy issues are complex and multidimensional and that issue definitions are based on the various dimensions of the issue weighted by the salience of those dimensions. To estimate this model, I draw on the increasing
+availability of digitized text documents and the increasing
+sophistication of quantitative text analysis. While various approaches
+to text analysis and categorization have been used by scholars, I adopt
+latent Dirichlet allocation (LDA), a specific type of topic modeling, to
+estimate issue definitions. Using LDA, I then examine witness testimony
+taken from Congressional hearings about the issue of used nuclear fuel
+that occurred from 1975 to 2012 and discern seven distinct dimensions of
+the UNF debate. I then check the validity of these dimensions by testing
+them against two major policy changes that occurred in the used nuclear
+fuel domain. I conclude with a discussion of the strengths and weakness
+of topic modeling, and how this approach could be used to test
+hypotheses drawn from several of the major policymaking theories.
+\end{abstract}
+
+__Keywords__: Issue definitions, policy process, text analysis, topic
+modeling, latent Dirichlet allocation
+
+```{r, include=FALSE}
+source("LDAcode.R")
+```
+
+# Introduction
+
+Many of the policy issues facing modern societies are complex and
+contain multiple attributes. This complexity often means that policy
+issues can potentially be defined, or understood, in a variety of different ways. Policy scholars have long noted that how issues are defined can have profound impacts on the politics of the issue and the ultimate policy choices. Policy process scholars use various concepts and focus on different aspects of the policy process across multiple theories, however several of these theories are interested in the way that issues come to be understood, and thereby defined, by elite policy actors and the mass public. Issue definitions (and re–definitions) can play a role in getting an issue on the policymaking agenda, facilitating punctuated policy changes, policy design choices, and coalition formation. Given the importance of issue definitions for understanding the policymaking process, finding a way to theoretically and empirically model how issues are defined and framed could produce important insights based on empirical tests of hypotheses drawn from the multiple policy process theories and frameworks.
+
+Issue definitions are largely communicated, and contested, through
+debate and argument that occurs within political institutions and public
+forums. Often these arguments are transcribed as part of a public
+record, for this reason examining these records empirically requires the use
+of sophisticated methods of quantitative text analysis. Several
+approaches of quantifying texts, across multiple disciplines, have been
+developed such as human (or hand) coding, computer-assisted (supervised learning), and fully-automated (topic models), with each approach having advantages and disadvantages. The choice of which approach to use should alawys be based on the research question and the theory, or theories, being tested. In this paper, I develop a model of issue definitions and use a fully-automated approach of text analysis to estimate this model in a single policy area.  Specifically, I use latent Dirichlet allocation (LDA), a commonly used topic model [@mohr_introduction-topic_2013], to determine the attributes of used nuclear fuel (UNF) management. The data I analyze is drawn from the opening statements of witnesses at 140 Congressional hearings about UNF that took place between 1975 and 2012.
+
+The management of UNF--the radioactive material used in the
+production of nuclear energy--has been a scientifically, technically,
+and politically vexing policy issue for several decades. Currently in the United States, UNF is stored on–site at the 65 nuclear power plants that produce nuclear energy. This material was intended to be shipped and stored at Yucca Mountain, located about 100 miles from Las Vegas, Nevada. However, in February 2010 the Obama Administration asked the Department
+of Energy to withdraw the license application for Yucca Mountain that
+had previously been submitted to the Nuclear Regulatory Commission,
+leaving the question of how this material should be managed unanswered.
+The examination of the issue of UNF management allows important
+insights into the policymaking process, particularly within policy areas
+that are steeped in scientific and technical information, controversial,
+and possess a long time horizon.^[Indeed, the Environmental Protection Agency is required to develop exposure regulations that stretch out to 1 million years.] These qualities make considerations of how policy issues are understood by policy actors even more vital.
+
+This article introduces a theoretical and empirical model of issue
+definitions that could be used to test hypotheses from multiple policy
+process frameworks. It is based on scholarship from the policy process literature and the framing literature within political science and is intended to offer a theoretically and empirically generalizable model for understanding how issues are defined. The next section describes the theoretical approach to understanding issue definitions. Following that, I discuss various ways that texts can be analyzed quantitatively, including the advantages and disadvantages. The subsequent section discusses LDA; the approach used to develop the empirical model of issue definitions. I then examine the issue of UNF and, using LDA, derive seven dimensions, __deemed to have sematic validity__, that were discussed in the Congressional hearings. Next, I check the __construct__ validity of those dimensions by predicting shifts in several of the dimension based on two major policy changes. I find that these policy changes impact the salience of the dimensions in a systematic way, providing evidence for the validity of my approach to modeling issue definitions. Finally, I conclude with a discussion of how this approach may be used to test hypotheses drawn from the various policy process theories.
+
+# Issue Definitions and the Policy Process
+
+Policy scholars have long been concerned with how policy issues are
+understood and the implications of those understandings for the
+policymaking process and for policy outcomes. Traditionally in the
+policy literature research on issue definitions has been fragmented, focused mostly on questions of agenda setting, and often conflated with research on framing. Terms such as "problem definitions", "policy images", and "frames" have each been used to describe the way that policy issues are understood by policy actors and the public. The model I propose builds on past work and offers a way to theoretically and empirically model issue definitions to test hypotheses drawn from multiple theories of the policy process.
+
+The issue definition model is based on classic spatial understandings of politics where policy issues, such as education, environmental regulation, and immigration have been characterized as dimensions in a multidimensional policy space [e.g., @downs_economic_1957; @riker_theory_1962; @hinich_ideology_1994]. Policy issues reach the agenda when the salience (i.e., importance) of that issue (dimension) increases. However, given the complexity of many policy issues, the issues themselves are multidimensional as well [@jochim_issue_2013]. Therefore, an _issue_ space consisting of the multiple dimensions of a single issue is nested within the broader _policy_ space that consists of multiple issues. Research on media framing provides a useful way to distinguish between the policy space of agenda setting, known as "first-order" agenda setting, and the issue space of issue definitions, or "second-order" agenda setting [@ghanem_filling_1997;@mccombs_candidate_1997;@mccombs_look_2005;
+@weaver_thoughts_2007;@boydstun_agenda_2013]. In the media framing literature, policy issues on the first-order agenda constitute _objects_ and each of those objects consist of multiple _attributes_ that make up the second-order agenda. 
+
+In policy research, first-order agenda setting examines the salience of the various policy issues within the policy space, and is centered around the question of how "conditions" that exist in the world become salient "problems" (or issues) on the policymaking agenda 
+[@kingdon_agendas_1984; @stone_causal_1989; @rochefort_problem_1993; @baumgartner_agendas_1993; @wood_politics_2003]. One of the prominent models of agenda setting is the multiple streams approach developed by @kingdon_agendas_1984. Kingdon argued that policymaking is separated into a problem stream, a policy stream, and a politics stream and that issues reach the policymaking agenda when a policy window opens, and the three streams are merged. In brief, conditions become problems when it exists in the problem stream, a potential solution is present in the policy stream, significant interest exists in the politics stream, and the timing is right.
+
+Other examples of first-order agenda setting research include @stone_causal_1989, who argued that conditions become problems
+once a causal story is developed that attributes blame for the
+problem on the actions of some individuals or groups. Once a causal
+story is in place, the condition is more likely to be seen as something
+that can be effectively dealt with by government and for this reason, more likely to be placed on the agenda. Building on Stone, @rochefort_problem_1993 argue that problems are defined along several dimensions including problem
+causation, nature of the problem, characteristics of the problem
+population, and the nature of the solutions. How problems are understood
+along these dimensions can impact whether they reach the policymaking
+agenda. Punctuated Equilibrium Theory (PET) notes the important role that policy images play in getting issues on the agenda and subsequently facilitating policy change. Within PET, changing policy images interact with policy venues to produce large-scale "punctuated" policy changes [@baumgartner_agendas_1993]. For example, the nuclear energy subsystem experienced rapid shifts as the policy image changed from positive to negative and attracted new policy actors across new policy venues. Finally, @wood_politics_2003 developed a threshold model of problem definitions and argued that conditions become problems once those conditions pass a certain threshold among a critical mass of individuals, thereby forcing institutions into action. The above research has provided valuable insights into how issue definitions help to explain how problems reach the policymaking agenda. Other work has examined how issues are defined once they reach the policymaking agenda. 
+
+Attempts to define or frame a policy issue do not end once they are on the policymaking agenda. @jones_politics_2005 note that policy issues can be characterized by their relevant attributes and the salience assigned to those attributes. This policy characterization approach is based on notions of bounded rationality in individuals and institutions, where attention is a scarce resource  [@jones_politics_2001; @jones_politics_2005]. Given that attention is scarce, only certain attributes of an issue may be salient at any point in time. However, the salience of attributes can shift as a result of exongenous events, re-framing by policy actors, or some combination of events and successful re-framing. In addition, just as new issues can emerge on the policy agenda through _issue_ intrusion, new (or re-framed) attributes of an issue can become salient through _attribute_ intrusion [@jones_politics_2005]. 
+
+In addition to the work by policy scholars, a vast literature on framing has provided several important insights related to how issues come to be defined.  Several definitions of framing exist [see @druckman_implications_2001], but for my purposes framing is defined simply as "the process by which people develop a particular conceptualization of an issue or reorient their thinking about an issue" [@chong_framing_2007, 104]. This definition, known as a "frame in thought", is based on the model of attitude developed by @fishbein_investigation_1963, where an attitude about some object is a function of a set of beliefs about that object weighted by the evaluation (positive or negative) attached to those beliefs. As with the policy characterization approach discussed above, an attitude (or an issue definition) is based on the weighted sum of beliefs (or attributes) about an issue. This assumption forms the basis of the issue definition model I propose. 
+
+Issue definitions and framing are closely related concepts. Indeed, framing has been said to have "two-faces", one which is focused on the way an issue is understood collectively and the other focused on how individuals attempt to alter that understanding [@baumgartner_two_2008]. In addition, the attributes or dimensions of an issue have also been termed "frames" [e.g., @baumgartner_decline_2008; @rose_framing_2013]. The issue definitions model I propose is based on _the way that an issue is understood collectively_, meaning which issue dimensions are the most salient for the majority of policy actors. ^[Note that I am using the terms frames, attributes, and dimensions, interchangeability.] Therefore, issue definitions are distinct from the act of framing, which constitutes attempts by individuals, groups, or coalitions to highlight one dimension at the expense of others in an attempt to alter how the issue is defined collectively. When policy actors attempt to frame (or re-frame) an issue, they engage in "frame in communication" where they highlight one particular dimension of the issue [@chong_framing_2007]. The fact that policy issues are complex and contain multiple dimensions is what allows policy actors to attempt to manipulate those dimensions to their advantage. @riker_art_1986 termed these types of maneuvers heresthetics, and one particular type of heresthetic is the manipulation of dimensions--the restructuring of the issue space through the addition and/or subtraction of dimensions--related to a particular issue [@riker_heresthetic_1990].
+
+## Modeling Issue Definitions
+
+The model of issue definitions that I propose builds on this past work,
+but is intended to be more generalized. In essence, the model attempts to
+lay a theoretical and empirical foundation for explaining how issues are understood collectively, __where collectively is understood as the aggregation of the relevant policy actors attempts to frame (or re-define) the issue. As noted, the "two faces" of framing divides framing between individuals attempting to re-frame an issue to their advantage and by the overall collective frame or the way that the issue is defined in the aggregate__ [@baumgartner_two_2008]. __The issue definition model presented here argues that the collective issue definition is the aggregation of frames by policy actors__. The basic assumption of the model is that issues are complex and contain multiple attributes and that these attributes can be thought of as existing in a multidimensional issue space. Issues are defined collectively based on the weights assigned to the various dimensions. However, it is likely that policy actors, particularly in conflictual policy areas, will have differing issue definitions and be actively engaged in attempts to re-frame the issue. Indeed, these varying definitions and re-framing attempts are what structure conflict in contentious policy areas __and are what determine the overall collective definition of the issue__.^[__@baumgartner_two_2008 note that collective definitions are also determined by exogenous forces, however in the model I propose the collective issue definitions are the summation of attempts to frame an issue by individual policy actors. Further work should seek to explore ways to incorporate exogenous forces into the model__.] Therefore, modeling the various issue definitions can provide insight into the nature of policy conflict and resolution.
+
+The issue definition model is intended to provide a generalizable
+model of how policy issues are understood. It assumes a multidimensional
+issue space, policy actors that vary in their definition of the issue__, and that a policy issue is defined collectively by aggregating the issue definitions of individual policy actors__. By assuming that actors define issues differently, I mean that policy actors vary in the salience that they attach to each dimension of the issue. Salience is defined as the importance of a particular dimension and the centrality of a dimension for understanding the policy issue. Therefore, a dimension that is
+considered highly salient is seen as a) important and b) central to how
+the issue is understood. An issue definition for issue $a$, denoted
+$\theta_{a}$, is an aggregation of the various issue dimensions weighted
+by the salience of each dimension.^[__This is similar to the model of frames discussed in @chong_framing_2007, which focused on emphasis framing (i.e., highlight one or a few dimensions of an issue) of individual policy actors.__] The model is expressed simply and more formally as:
+
+$$\theta_{a} = \sum_{i=1}^{n} s_i$$
+
+where $s_{i}$ is the salience of dimension $i$ for issue $a$.
+
+Note that the model above is static, or the issue
+definition at time $t$. However, the salience of dimensions can vary
+over time making issue definitions dynamic. The dynamic element of issue
+definitions is a function of the changing salience $s_{i}$ that results
+from the evolution of a policy, a focusing event, and/or competition between policy actors over time. Also, this model could be used to examine first-order agenda setting, in which case $\theta_{a}$ would be the policymaking agenda and $s_{i}$ would be the salience of each issue. However, the focus of this paper is second-order agenda or issues definitions, and therefore the remaining discussion will be focused on dimensions of issues.
+
+The empirical model, described in more detail below, uses witness testimony in Congressional hearings and estimates $\theta$ _as the proportion of each witness statement that is about each issue dimension_. When the issue definition model is estimated empirically, it is assumed that the proportion of the witnesses testimony about $K$ UNF issue dimension is a proxy for the salience the policy actors attach to the $K$ dimension. The estimation of the issue definition model requires the quantification of "text-as-data", and the next section describes various approaches of quantitative text analysis.
+
+# Quantitative Text Analysis
+
+The analysis of text-as-data is a growing area of interest in political
+science and public policy research. More scholars are moving toward
+quantitative methods to examine the growing amount of text data that is
+becoming widely available through social media and the increasing
+digitization of historical documents [@hopkins_method_2010].
+Quantitative text analysis seeks to categorize and draw inferences from texts in a systematic fashion. There are multiple ways and methods to quantify
+text and each approach contains strengths, weaknesses, and trade-offs
+[@quinn_how_2010]. Broadly speaking, scholars apply quantitative text analysis
+techniques for either the *classification* or *scaling* of
+texts [@grimmer_text_2013]. Classification or clustering, places texts into one of several possible categories, and scaling locates actors in a policy
+space (e.g, along a liberal--conservative dimension). My interest is
+in clustering--specifically clustering texts by issue dimension--therefore I will focus on those techniques.^[For more about approaches of scaling texts, see @laver_extracting_2003; @lowe_understanding_2008; @lowe_scaling_2011 .] The various classification techniques include human coding, as well as computer-assisted approaches such as supervised learning, where categories are known prior to analysis, and unsupervised approaches where categories are unknown [@grimmer_text_2013]. In the next section, I briefly describe each approach before moving on to a more in-depth discussion of latent Dirichlet allocation (LDA), the type of unsupervised learning approach that I adopt for the empirical issue definitions model.
+
+## Classification Techniques
+
+Multiple techniques have been used by scholars to analyze text documents, and each approach has its strengths and weaknesses. The most widely used approach is likely human coding. Human coding involves the hand-coding of
+documents, usually by multiple coders, based on categories determined
+by the researchers and assumed to be unchanging. Coders then
+assign the text documents to one of the categories, often following a codebook
+developed prior to the analysis.^[Although the codebook can be adjusted in an iterative process during the analysis phase.] For example, some of the early work on the Advocacy Coalition Framework (ACF) used hand coded Congressional
+testimony to determine the policy beliefs and coalition affiliations of
+policy actors [@jenkins-smith_explaining_1991; @jenkins-smith_politics_1993]. In another example, the Policy Agendas Project codes Congressional
+hearings, executive orders, State of the Union speeches, Supreme Court
+cases, and other policy documents as being about 1 of 19 major topics
+and 225 sub-topics.^[See http://www.policyagendas.org/ for more information.] More recently, scholars have developed ways to
+discern the major elements of policy designs by coding policies
+according to a rubric based on the Grammar of Institutions developed by
+@crawford_grammar_1995 [these studies include
+@basurto_systematic_2010; @siddiki_dissecting_2011; @siddiki_using_2012].
+Human coding, particularly when using multiple coders, can be a valid
+and reliable approach to code texts because multiple coders permit various reliability tests. In addition, human coders following a codebook could conceivably code anything of interest to researchers, such as beliefs, issue attributes, and attempts to re-frame an issue whereas, some of the semi-automated and automated approaches discussed below may be limited in scope. However, human coding is often cost prohibitive due to the resources needed to develop a codebook and to train and pay coders. In addition, the categories, or the other item(s) to be coded, need to be clearly defined and well understood by each coder. As a result of the challenges inherent in human coding, several computer-assisted approaches have been developed. It should be noted that these approaches do not supplant careful reading and understanding of the texts being studied, rather they augment and enhance the ability of humans to classify a large volume of texts across multiple categories.
+
+Computer-assisted clustering approaches are divided into two categories based on the automation of the approach. The first type, _supervised learning_ is semi-automated and the second type, _unsupervised learning_, is fully automated. Supervised learning combines human coding and automated approaches. A subset of the texts are hand coded, typically the texts are placed into categories by one or more human coders, and then the remaining texts are categorized using a machine–learning algorithm [@collingwood_tradeoffs_2012]. The hand coded texts constitutes the "training" data, and the excluded texts are the "test" data. Often the idea behind this approach is to get a sense of the overall proportion of documents that belong within a particular category [@hopkins_method_2010; @grimmer_general_2011].^[There are a growing number of software applications, based in the R statistical
+programming language which use this type of approach. These include
+*ReadMe* and *RTextTools*.] This approach combines some of the strengths of human coding with the additional speed of computer aided coding, making possible the coding of a large number of texts. However, this approach is limited in that, typically, each text can only be placed in only one of several possible categories and agreement is needed between coders as to which category the document should be placed. 
+
+While supervised learning methods require the use of some pre–coded data, unsupervised methods, such as topic modeling, are fully automated approaches requiring no prior analysis or setting of categories. Probabilistic topic models involve the automated processing of a large corpus (i.e., body) of texts to determine underlying latent themes or topics
+[@steyvers_probabilistic_2007; @blei_probabilistic_2012; @mohr_introduction-topic_2013]. In short, "Topic modeling algorithms are statistical methods that analyze the words of the original texts to discover the themes that run through them, how those themes are connected to each other, and how they change over time" [@blei_probabilistic_2012 77-78]. Topic modeling has been used to examine first-ordering agenda setting through Senate press releases [@grimmer_bayesian_2010; @grimmer_appropriators_2013],
+floor speeches in Congress [@quinn_how_2010], Supreme Court opinions
+[@rice_measuring_2012], and newspaper articles about federal funding for
+the arts [@dimaggio_exploiting_2013], among other applications. Given this success with first-order agenda setting, I use a topic modeling approach to estimate second-order agenda setting or issue definitions. Specifically, the
+approach I adopt to model issue definitions is latent Dirichlet
+allocation (LDA) modeling, which is a type of topic model. LDA is
+explained in detail and justifications for its use are explained in the next section.
+
+## Latent Dirichlet Allocation
+
+The issue definition model posits that issues are defined by the
+dimensions of the policy issue weighted by the salience of those
+dimensions. I use LDA in order to empirically determine issue
+dimensions and the salience of each dimension. LDA is an automated data clustering technique, and the core assumption of LDA is that a single document can contain multiple latent clusters of topics [@blei_latent_2003], where a topic is determined probabilistically by the co-occurrence of words. __LDA can be evaluated by the sematic validity of the topics--the ways the terms associated with each topic cohere--and by construct validity; how the topics correspond with exogenous events__.
+
+As noted, LDA models have been used previously to estimate first-order agenda setting, which is the salience of particular issues within the multidimensional policy space. For example, @quinn_how_2010 estimated the topics of legislative speeches given in the U.S. Senate from 1997 to 2004 and found 42 distinct topics (i.e., policy issues) drawn from the Senate speeches. In addition, they demonstrated that topic frequency varied in expected ways. For example, abortion was discussed in floor speeches in conjunction with votes related to abortion and the number of speeches about defense rose in response to September 11th, and the Iraq War. Examples of LDA for second-order agenda setting are limited [but see @hopkins_exaggerated_2013;@borang_identifying_2014], however it offers __several__ strengths for modeling issue definitions.
+
+One weakness of human coding and supervised learning methods is that texts tend to be classified or clustered into only a single grouping or category. However, many of the types of documents used to determine issue dimensions---newspaper articles, interest groups statements, and Congressional testimony---are likely to touch on more than one of the possible dimensions. For example, a news article about climate change could discuss the scientific consensus, possible extreme weather, and economic costs of regulation, however, human coders, and supervised approaches would require that article to be classified as "mostly" about one of those topics.^[Although for some research questions and hypotheses this would be desirable. __In addition, the unit of analysis for human coders could be adjusted down to the sentence level to better capture mutiple topics within a document. However, at that level of analysis agreement between coders may be more difficult to obtain.__] 
+
+Therefore, LDA models are a __useful__ approach for the issue definition model given that it is important to be able to assume that policy issues exist in a multidimensional space, and that policy actors will likely touch on more than a single dimension. As noted by @blei_probabilistic_2012, "the distinguishing characteristic of latent Dirichlet allocation [is that] all the documents in the collection share the same set of topics, but each document exhibits those topics in different proportion" (p. 79). For this reason, LDA offers a distinct advantage over human coding and semi-automated approaches in estimating issue definitions because the model makes probabilistic assessments about the proportion of each topic within each document. 
+
+In brief, LDA assumes a hierarchical structure that contains a corpus--a body or collection of documents--documents that are a collection of topics, and topics that are a collection of words [@steyvers_probabilistic_2007]. As such, LDA models are structured hierarchically as:
+
+*Corpus* $\rightarrow$ *Documents* $\rightarrow$ *Topics* $\rightarrow$
+*Words*
+
+Similarly, the issue definition model, where the documents are the opening statements for a witness at a Congressional hearing and the topics are the issue dimensions is structured as;
+
+*Opening Statements* $\rightarrow$ *Issue Dimensions* $\rightarrow$
+*Words*
+
+An additional assumption of LDA is that the documents and the words are
+observed, but a latent, or hidden, structure of topics, topic
+distributions per documents, and word distributions per topic exists.
+Therefore, LDA can be thought of as a dimension reduction approach where
+multiple words are __estimated to be__ associated with a few latent topics. The model estimates words within topics and topics within documents
+simultaneously, with the goal of inferring the latent structure of topic
+proportions within documents. In more formal terms, LDA is a generative
+model based on *observed* variables (words) and *hidden* variables
+(topics) that defines a joint probability distribution. The joint
+probability distribution is then used to calculate, though Bayes’ rule,
+a conditional or posterior distribution of the hidden variables given
+the observed variables [@blei_probabilistic_2012 79-80].
+
+Using formal notation adopted from @blei_latent_2003, a *word* is
+denoted $w$, and a *document* is a collection of $N$ words,
+$\textbf{w}=(w_{1},w_{2},...,w_{n})$, where $w_{n}$ is the $n$th word in
+the document. Note the word ordering is not important and that LDA
+assumes a "bag of words" approach, where the co–occurrence of terms and not
+the order of terms is used to determine underlying topics. Finally, a
+*corpus* is a collection of $M$ documents denoted
+$\textbf{D}=(\textbf{w}_1, \textbf{w}_2,...,\textbf{w}_M)$. Following
+this notation, the generative process--the assumed process that
+generated the documents, topics, and words--can be described as follows
+[@blei_latent_2003 996]:
+
+-   Choose $N \sim$ Poisson($\xi$)
+
+-   Choose $\theta \sim$ Dir($\alpha$)
+
+-   For each of the $N$ words $w_{n}$
+
+    -   Choose a topic $z_{n} \sim$ Multinomial($\theta$)
+
+    -   Choose a word $w_{n}$ from $p(w_{n}|z_{n},\beta)$, a multinomial
+        probability conditioned on the topic $z_{n}$.
+
+Topic proportions, denoted $\theta$, are the sum of the probabilities
+for each topic in the $d$th document. In the theoretical issue definition model, $\theta$ was the summation of the issue dimensions weighted by salience, and that concept is operationalized as the topic proportions estimated by LDA.^[ Note that these estimated proportions sum to 1.] These proportions are assumed to be drawn from a Dirichlet prior, $\theta
+\sim$ Dir($\alpha$) where $\alpha$ is the Dirichlet distribution’s shape
+parameters. The number of topics $K$, and by extension the
+dimensionality of Dir($\alpha$) and the topic variable $z$, is assumed _a
+priori_ and is also assumed as fixed. __Note that a proportion is estimated for each of the $K$ topics within each document, however these estimated proportions can be quite small (e.g, 0.001) which would indicate that topic was not very prevalent within that document__. The standard Dirichlet prior of $\alpha$ is $50/K$ [@griffiths_finding_2004]. Finally, the distribution of words is parameterized by $\beta$.
+
+As noted, the observed and latent variables form a joint distribution
+that given the parameters $\alpha$ and $\beta$, topic mixture $\theta$,
+a set of $N$ topics $\textbf{z}$, and a set of $N$ words $\textbf{w}$
+can be expressed as:
+$$p(\theta,\textbf{z},\textbf{w}|\alpha,\beta)=p(\theta|\alpha)\prod_{n=1}^{N}
+p(z_{n}|\theta)p(w_{n}|z_{n},\beta)$$
+
+This joint distribution is used to calculate a posterior distribution of
+topic probabilities for each document, expressed as:
+$$p(\theta,\textbf{z}|\textbf{w},\alpha,\beta)=\frac{p(\theta,\textbf{z},\textbf{w}|\alpha,\beta)}{p(\textbf{w}|\alpha,\beta)}$$
+The numerator is the joint distribution of all random variables and the
+denominator is the probability of obtaining the observed corpus under
+any topic model. These probabilities could be summed over all possible topic structures, however, given the large number of possible topic structures this becomes "intractable to compute" [@blei_probabilistic_2012 81]. Therefore, this total needs to be approximated using either sampling based or variational
+approximations [@blei_probabilistic_2012]. I use Gibbs sampling to
+estimate the posterior distribution [@griffiths_finding_2004].
+
+In less formal terms, LDA is a data reduction technique or cluster
+analysis, that assumes that a text document has a mixture of latent
+topics. Words that co–occur repeatedly across documents are assigned __a high probability of being associated with__ a topic. Then, based on the array of words in a document, LDA estimates the proportion of each document that refers to each topic. __One important way of evaluating the results of LDA is examning whether the words that were given a high probability of being associated with a topic cohere is a reasonable fashion. In other words, do the terms, when grouped together, seem to relate to the same topic__. The next
+section describes the data collection process, and the topics present
+during Congressional hearings about UNF.
+
+# Defining Used Nuclear Fuel
+
+Data for the analysis came from 140 Congressional hearings,^[I excluded appropriation hearings from the subsequent analysis.] drawn
+from the _ProQuest Congressional_ database about used nuclear fuel between the years 1975 and 2012. The hearings were found using the search terms
+"nuclear waste", "spent nuclear fuel", "used nuclear fuel", and "Yucca
+Mountain."
+
+Hearing transcripts, in PDF format, were available for each hearing.
+Overall, these hearings included a total of 1,322 witnesses, of which
+1,271 gave opening statements, and the remainder were either silent or
+only answered questions. The verbal opening statements of each of these
+witnesses were extracted from the hearing transcript, each statement
+became a separate document, and these documents were combined into a
+corpus.^[ Some previous work has coded the written statements of witnesses
+    [e.g., @esterling_deliberative_2011], however I chose to use the
+    verbal statements because witnesses, do to time constraints, are
+    likely to express the most salient points in the verbal statement.
+    In addition, only the opening statements were used and not the
+    question and answer portions of the hearings, so that only those
+    dimensions that the witness thought salient, and not the questioner,
+    would be determined.] The next section describes the dimensions of the UNF issue __and examines their semantic validity__. Following that I examine the the __construct__ validity of the dimensions by predicting the mean proportion of each dimension following two major policy changes; the Nuclear Waste Policy Act of 1982 and the Nuclear Waste Policy Amendments Act of 1987.
+
+## Document Pre-processing
+
+While LDA does not require any pre-analysis such as categorizing texts, some pre-processing of the documents prior to modeling are necessary. The first steps involved removing numbers and punctuation and placing terms in lowercase. The next step was to remove all standard stop-words (e.g., and, for, in, is, it, the) from the corpus. An additional number of stop-words unique to the policy issue (e.g., nuclear, waste, spent, fuel) and unique to the context of Congressional hearings (e.g., chairman, committee, thank,
+testimony) were also removed. These stop-words are removed because they
+are common to nearly every witness and therefore provide no valuable
+information.^[This is standard practice when doing this type of text analysis
+    [see @grimmer_bayesian_2010; @quinn_how_2010]. __A complete list of the issue and hearing specific words that were removed is included in the appendix__.] While it is important to remove words that are extremely common, it is just as important to remove words that are rarely used, or used by only a few witnesses. This is important because rarely used words are not likely to be associated with any topic, thereby introducing unwanted noise into the model. Thus, I removed all terms that were not in at least 1% of the documents. Next, I use the Porter algorithm [@porter_algorithm_1980] to stem the remaining terms. Stemming refers to the process of removing the suffix of terms to equate similar terms while reducing the overall number of terms. For example, the stem word "decis" stands for decision or decisions. Finally, I
+created a document-term matrix where rows represent the documents, the
+columns represent the terms, and the cells contain the number of times
+each term appears in each document. This matrix contained the 1,271
+documents as the rows and the 2,941 terms.^[For more detail on the steps discussed above see @feinerer_text_2008.] __After pre-processing the documents the word length of the documents ranged from a minimum of `r min(rowSums(as.matrix(stateDTM)))` to a maximum of `r max(rowSums(as.matrix(stateDTM)))`, with mean word length of `r round(mean(rowSums(as.matrix(stateDTM))),4)`__. Once this pre-processing is complete, the next step is determining the number of topics. 
+
+## The Selection of $K$ Topics
+
+Since the $K$ number of topics are assumed _prior_ to modeling, which is a
+common feature of cluster algorithms [@grimmer_general_2011], care must
+be taken when assigning the number of topics. Determining the $K$ number
+of topics is one of the major challenges when using topic models
+[@blei_topic_2009]. Compared to supervised approaches where the onus is
+on the researcher to develop categories *prior* to analysis,
+unsupervised approaches, such as topic models, place the burden on the
+researcher to ensure that the categories derived by the model are justifiable according to clear guidelines that are spelled out by the researcher.
+
+There are several possible guidelines that scholars can use when selecting $K$, most of which are substantive and conceptual [@quinn_how_2010 216]. First and foremost however, the topics must have semantic validity [@quinn_how_2010; @grimmer_text_2013]. Semantic validity means that each topic has a clear and coherent meaning that can be discerned by the association of terms to that topic [@krippendorff_content_2003]. Coupled with semantic validity, substantive knowledge of the policy issue or area can be used to determine $K$. Given that automated techniques augment human understanding without replacing it, having a basic understanding of the issue and how it has evolved is important. In particular, substantive knowledge of the policy area is extremely helpful in determining semantic validity.
+
+In addition, $K$ should be selected based on the research question, the hypotheses being tested, and be guided by theory. For example, in this paper I use LDA to empirically estimate the issue definition model by determining the issue dimensions that have been used to define the UNF issue over several decades. Given that the model of issue definitions is based on the collective issue definition, $K$ is smaller then if I was interested in particular framing strategies of interest groups, since the collective issue definition is biased toward framing strategies that were successful.
+
+Finally, sensitivity analysis---varying $K$---should always be used when performing LDA. Researchers should use an iterative process of modeling with varying $K$ topics and each iteration should be examined using the guidelines suggested above.
+
+## Used Nuclear Fuel Dimensions
+
+To determine the distribution of dimensions at Congressional hearings
+regarding used nuclear fuel, I used LDA on the opening statements of
+witnesses appearing at those hearings. As noted, LDA assumes a
+proportion per document of latent topics based on the distribution of
+terms, where terms that co-occur frequently are understood as belonging
+to the same topic. __Terms are assigned to topics probabilistically and a term can have a high probability of being associated with more than one topic__. The observed data (terms) are used to estimate the
+unobserved topics. In other words, the model finds the parameters
+$\alpha$ and $\beta$ that maximize the log-likelihood of the data in the
+1,271 $X$ 2,941 matrix [@blei_latent_2003]. For my purposes, topics are
+assumed to be synonymous with the dimensions of an issue.
+
+The criteria that I used to evaluate the results of models using
+different numbers of topics was based on semantic validity, knowledge of the issue, and the proposed theoretical model of issue definitions. Given that I was interested in measuring the various dimensions of the UNF issue across several decades, $K$ should represent dimensions that are likely to exist
+throughout the time period being examined. Sensitivity analysis was used and models estimated with varying $K$ topics, including 2, 4, 5, 6, 7, 8, 10,
+20, and 50 were examined, and the model that was estimated with $K=7$  dimensions was ultimately selected. With $K \leq 6$ several terms
+overlapped making topics somewhat less clearly differentiated and with $K \geq 8$ there tended to be clusters that either didn't have semantic validity--weren't clear as to what possible topic they represented--or were too narrow and could best be combined under one dimension. Given these results
+seven topics were chosen as the best fitting number of dimensions. Finding seven dimensions within a single issues seems to fit with other work on issue definitions. For example, recent work by @rose_framing_2013 found five dimensions (or frames) for poverty policy, @baumgartner_decline_2008 found seven dimensions for the death penalty,^[However, those seven dimensions of the death penalty issue were aggregated based on the discovery of 65 "frames" used in _New York Times_ article abstracts. As noted, the IDM is focused on collective issue definitions and therefore is focused on a smaller number of $K$ topics. However, LDA could be used to analyze strategic framing by selecting a higher number of $K$ topics.] and @hopkins_exaggerated_2013 found twelve dimensions for heath care policy. The
+results of the LDA process are shown in Table [tab:dims].
+
+Table [tab:dims] lists each of the seven dimensions and the 30 terms
+that __had the highest probability of being__ associated with each dimension.^[Note that each term has a probability of being associated with each topic. Therefore, a term can have a high probability of being associated with more than one dimension/topic. Also, 30 terms was chosen for illustrative purposes, but dimensions/topics should likely be discernible from fewer terms. For example, @cite uses _ terms, @cite uses _ terms. ] As is
+evident in Table [tab:dims], terms tended to cluster into seven
+discernible dimensions which I then termed as the following;
+programmatic, safety/regulation, Yucca Mountain, site selection,
+scientific/technical, storage, and transportation. __As noted, the same term can be associated with more than one topic and this is common with LDA [@]. For example, the term _site_ has a high probability of being associated with both the programmatic, site selection, and scientific/technical dimensions. However, when determining the sematic validity of a topic it is the probability of several terms being associated with the topic that illustrates its meaning__. Below I briefly describe each of the seven dimensions. 
+
+> *Programmatic*: The programmatic dimension deals largely with the
+> development and implementation of programs related to the selection
+> and characterization of a suitable site for waste disposal. This is
+> evidenced by terms such as "site", "program", "review", "plan", and
+> "process."
+>
+> *Safety/Regulation*: The safety/regulation dimension deals with the
+> development and implementation of proper regulatory standards for
+> dealing with used nuclear fuel. This can be seen by the importance of
+> such terms as "radioact", "dispos", "standard", and "manag."
+>
+> *Yucca Mountain*: This dimension deals with Yucca Mountain in Nevada,
+> the site ultimately chosen for disposal, as evidenced by terms such as
+> "mountain", "yucca", and "nevada."
+>
+> *Site Selection*: Site selection is largely about the *politics*
+> surrounding the process of choosing possible site locations to store
+> used nuclear fuel. Important terms include "site", "nation",
+> "concern", and "polit." The term "polit" is the stem for terms like
+> *politics* and *political*.
+>
+> *Scientific/Technical*: The scientific/technical dimension deals with
+> the science of used fuel storage (e.g., "studi", "test", "data") and
+> the type of natural medium that could be used "salt", "geolog", "rock"
+> for storage.
+>
+> *Storage*: This dimension deals with questions about storage (e.g.,
+> "storag") and waste management, but largely centers on concerns about
+> on-site storage at nuclear power plants vs. off-site storage of waste.
+> This is evidenced by terms like "facil", "reactor", "capac."
+>
+> *Transportation*: The transportation dimensions deals with
+> transportation of spent nuclear fuel from production site to storage
+> site (e.g., "transport", "shipment", "rout").
+
+As discussed above $K=7$ was chosen following multiple iterations of the model with varying values for $K$. With $K \leq 6$ the programmatic, safety/regulation, and scientific/technical dimensions tended to overlap, yet those dimensions could be seen as distinctive. With $K \geq 8$ the storage dimension tended to divide into long-term storage and interim storage. Questions related to interim storage of UNF were discussed largely in the mid to late 1990's, therefore interim storage as a separate dimension from larger questions of UNF storage was deemed to be specific to that time period. Another example was the scientific/technical dimension where questions of the proper geological medium for storage tended to be its own dimensions when $K \geq 8$. However, deep geologic disposal was settled as the preferred medium in the late 1970s to early 1980s, making questions of storage medium too specific to that time period.
+
+Table [tab:desc] provides descriptive statistics for each dimension. As
+noted, each opening statement has an estimated topic proportion for each
+of the seven dimensions, __yet this estimated proportion can be quite small__. Table [tab:desc] displays the overall mean, standard deviation, and minimum and maximum values for each dimension.
+
+__TABLE [tab:desc] ABOUT HERE__
+
+The programmatic dimension has a mean of `r ` 0.20, which indicates that the
+average proportion of the programmatic dimension across all the
+statements is `r ` 0.20. The programmatic dimension also has the highest
+mean, which indicates that it was the most salient (i.e., most talked
+about) dimension over the full span of hearings. Site selection had the
+next highest mean at `r ` 0.17, followed by Yucca Mountain and storage at
+`r `0.14, then science/technical at `r ` 0.13, and finally safety/regulation and transportation each had a mean proportion of `r ` 0.11. However, the high
+standard deviations of each dimension indicates a sizable amount of
+variation around the mean. This is also seen in the min and max values
+that range from `r ` 0.01 to `r ` 0.82. A min value of `r ` 0.01, which is near zero, indicates that the dimension was not discussed much in at least one
+statement and a higher max value, such as `r ` 0.82, means that an estimated
+82% of at least one statement was about that particular dimension. The
+dimension with the lowest max value was site selection at `r ` 0.59, whereas
+the dimension with the highest was scientific and technical at `r ` 0.82.
+Site selection had the lowest "peak" proportion (`r `0.59) but the second
+highest mean proportion (`r ` 0.17), indicating that this issue dimension was
+rarely the sole topic addressed by any particular witness, but was
+likely discussed in tandem with other dimensions.
+
+Figure [fig:dimst] shows how the proportion of attention paid to the
+different dimensions tended to vary over the period from 1975--2012. The
+panels within Figure [fig:dimst] show a scatterplot of the proportion of
+each dimension for each statement by Congress. Each scatterplot contains
+a lowess line--a non-parametric measure of fit--for each dimension
+showing the proportion of discussion devoted to that dimension over time.
+
+__FIGURE [fig:dimst] ABOUT HERE__
+
+As can be seen, the dimensions vary over time in their salience. The
+programmatic dimension seems to have risen for each Congress and peaked
+around the 99th Congress, or around 1985--1986. This is as expected given
+that is it the period after the Nuclear Waste Policy Act (NWPA) of 1982
+and just prior to the Amendments Act of 1987 (NWPAA), which designated
+Yucca Mountain as the only site to be considered. The safety/regulation
+dimension was more salient in earlier Congresses as opposed to later
+years, because this was when Congress was first examining how to deal
+with used nuclear fuel. Yucca Mountain became increasing salient
+following the NWPAA, over which period the Yucca site was the focus of
+UNF disposal policy. Site selection seems to have been most prominent
+following the 97th Congress, which passed the NWPA, and then starts to
+slowly taper off. The science and technical dimension seems to have
+remained relatively flat, however it seems to have much more variation
+in the earlier Congresses than in later ones. The storage dimension
+seems to have declined from the 94th Congress until rising again after
+the 100th and then staying at that level. Finally, transportation seems
+to have remained relatively flat over the entire period, although with
+periods of more variability.
+
+Overall, the salience of each dimension seems to rise and fall as 
+would be expected given the policy developments occurring within the various
+Congresses. This pattern of variation within dimensions provides some
+evidence for the validity of these dimensions, suggesting that they
+capture the nature of the debate concerning UNF policy over the
+1975--2012 period. The next section more closely examines the validity of
+the dimensions by using OLS to model the dimensions following two major
+exogenous events; the passage of the NWPA and the passage of the NWPAA.
+
+## Validity Check
+
+One way to examine the validity of the issue definition model is to
+examine whether the measure(s) correspond with exogenous events as we
+would expect.^[__As noted, @quinn_how_2010 found that their
+categorization of Congressional floor speeches matched important events
+in expected ways__.] To do this, I examine the impact of two major pieces of legislation on the salience of each of the dimensions.
+
+The Nuclear Waste Policy Act of 1982 (NWPA) was the first major piece of
+legislation that dealt directly with used nuclear fuel. Among its
+provisions, it required the Department of Energy (DOE) to study five
+potential sites and recommend three to the President by 1985; allowed a
+veto for the potential host state, however this veto could be overridden
+by Congress; and established away-from-reactor storage once storage
+capacity at a plant site had been met. The second major piece of
+legislation, the Nuclear Waste Policy Amendments Act of 1987 (NWPAA),
+designated Yucca Mountain in Nevada, as the only site to be considered
+for a used nuclear fuel repository [@vandenbosch_nuclear_2007].
+
+Knowing a little bit about these major policy changes and about the
+dimensions, we can derive some expectations about the behavior of the
+dimensions following each major change. For example, we expect that the
+salience of the programmatic dimension would increase following the
+NWPA, since the programmatic dimension is largely focused on the
+development and implementation of the programs that are called for in
+the NWPA. We would also expect that site selection would become more
+salient after the passage of NWPA, since that legislation initiated the
+process of studying various potential sites. Finally, we would expect
+that the Yucca Mountain dimension would become more salient after the
+passage of the NWPAA.
+
+To examine these salience changes, I used OLS to model the salience of
+each dimension following each of the two major policy changes.^[The focus here is only to see if some evidence of validity of the
+    dimension measures can be gained by examining their relationship
+    with two major pieces of legislation. Future research should use
+    more sophisticated time series techniques and examine the
+    relationship between the dimensions and policy change in much more
+    depth.] The dependent variable is the mean proportion for the predicted dimension aggregated by year. This gives an $N$ of 38, for the 38 years in the
+dataset (1975--2012). The two independent variables are dummy variables
+that represent the two policy changes. The NWPA variable has a value of
+0 for 1975 to 1981 and 1987 to 2012, and a value of 1 for 1982 to 1986.
+The NWPA was superseded by the NWPAA, which is why it has zero values
+from 1987 to 2012. The NWPAA variable has a value of 0 for 1975 to 1986
+and a value of 1 for 1987 to 2012. Table [tab:dimsal] presents the
+results.
+
+__TABLE [tab:dimsal] ABOUT HERE__
+
+As shown in Table [tab:dimsal], the programmatic dimension, as expected,
+became more salient following the passage of the NWPA, but showed no
+significant change following the NWPAA. The safety/regulation dimension
+became less salient following each major change. This may be because
+questions of the proper safeguards of this material were __addressed in both the NWPA and the NWPAA, thereby making them less salient following each major policy change__.  Also as expected, the Yucca Mountain dimension became significantly more salient following the NWPAA. The site selection dimension, as expected, became more salient following the NWPA. The scientific and technical dimension became less salient following the NWPAA, perhaps because the focused shifted to Yucca Mountain and away from broader technical questions. The storage dimension declined following the NWPA, likely because the NWPA settled the question of away-from-reactor storage. Although,
+away-from-reactor storage remains a highly controversial aspect of the
+used nuclear fuel debate. Finally, neither policy change had any
+significant impact on the transportation dimension. Overall, the
+dimension measures seemed to perform as expected, with *a priori*
+expectations about the programmatic, site selection, and Yucca Mountain
+dimensions being met and the other dimensions performing in ways that
+are quite plausible given the history of the UNF debate.
+
+# Conclusion
+
+Policy scholars have long noted the importance of issue definitions for
+the development of public policy. However, in the literature, terms like
+"issue definition", "problem definition", "policy images" and "issue framing" have often been used interchangeably. Furthermore, when applied these terms largely focus on questions of agenda setting. Moving beyond questions of agenda
+setting, I developed a model of issue definitions based on the
+underlying attributes (i.e., dimensions) of the issue  and how they combine
+within a multidimensional issue space to produce issue definitions. LDA,
+the method used to estimate the model, takes advantage of the increase
+in the availability of digitized policy related documents and the
+increasing sophistication of methods used for quantitative text
+analysis. These methods present policy scholars with unique
+opportunities to analyze the importance of how issues are defined.
+
+To estimate the dimensions of the UNF policy debate, I performed LDA
+analysis on the opening statements of the 1,271 witnesses that appeared
+in 140 Congressional hearing about UNF from 1975 to 2012. As described
+above, this approach was adopted after consideration of several other
+possible approaches. One advantage of the LDA approach is that it
+assumes multiple topics (i.e., dimensions) within a single document
+(i.e., testimony). This allowed for the estimation of the relative
+weights that were assigned to each of the seven dimensions for each
+witness. The results of the LDA model presented issue dimensions that
+possessed both semantic validity--a coherent meaning derived from the
+co–occurrence of terms--and external validity--responsiveness to exogenous
+measures. This indicates that the issue definition model, as proposed, should have utility for policy scholars interested in inferring topics (i.e., issue
+dimensions) from text documents. A draw back of this approach however,
+is that dimensions must be defined rather broadly to avoid clusters that
+are too context dependent (i.e., narrow or time-specific). In others
+words, to be able to compare dimension salience over time and across
+different policy actors, the dimensions must be consistent and appear
+across multiple time periods. While this approach is ideal to estimate
+the broad and collective dimensions of an issue, the issue definition model could miss some of the nuance associated with particular attempts to re-frame a policy issue. For example, national security
+elements were likely discussed when a) reprocessing of UNF was being
+considered in the mid-1970s and b) when Yucca Mountain was approved
+shortly after the 9-11 terrorist attacks. A topic modeling approach focused, like the issue definition model, on the collective dimensions may
+miss some of these nuances, however LDA could be used to identify these more nuanced frames, or attempts to re-frame, through an increase in the $K$ number of topics to be estimated. Best practice for examining attempts at framing would likely include human coding as a validity check on LDA. Finally, determining the number of $K$ dimensions should be done through an iterative process, and the choice of the best number of $K$ dimensions can be difficult. In contrast to other approaches to coding documents, this difficulty is faced following the analysis, and is a trade–off with the difficulty of developing (and updating) a codebook prior to the analysis.
+
+The issue definition model is intended to complement and build on, not replace, previous work on issue definitions. Indeed, the model could be incorporated into several of the leading theories of the policy process. The primary focus of the model is on second-order agenda setting or the multidimensional space of particular policy issues. However, in past work issue definitions have been closely associated with first order agenda setting and the model of issue definitions proposed could be used to examine these questions as well. For example, @rochefort_problem_1993 argued that problems are defined across several categories such as problem causation, nature (e.g, severity, novelty, crisis), and solution and are more (less) likely to appear on the policymaking agenda based on how problems fit into those categorizations. It is likely that one or more of the dimensions of an issue would fall into one, or more, of those categories. In addition, the work by @kingdon_agendas_1984 could be used and dimensions of the issue could be classified as being in on of the three streams. Finally, the issue definition model could be used as a way to operationalize policy images to track instances of changing images---which would be represented by different dimensions becoming more salient---that may lead to policy punctuations.
+
+The model of issue definitions proposed in largely intended for questions that go beyond agenda setting. For example, the model could be used to estimate information signals that are processed by policymaking institutions, within the theory of information processing [@jones_politics_2005; @workman_information_2009]. In that approach information is deemed as signals and these signals could be operationalized as the  highlighting of different dimensions by policy actors within a policy debate. With the UNF issue, it is likely that states being considered to host a repository would be more likely than other actors to signal the site selection dimension, whereas industry groups concerned about the build-up of UNF at reactor sites would signal the storage dimension,  Finally, the issue definition model could be used operationalize policy core beliefs in the Advocacy Coalition Framework (ACF). The ACF argues that policy actors exhibit a three-tiered structure of beliefs;
+with core beliefs, such as political ideology, being the most abstract
+and applicable across multiple policy domains; followed by policy core
+beliefs, which are more narrow in scope and contained within a single
+policy domain; and secondary beliefs, which are the most narrow and
+refer to things like particular policy instruments
+[@sabatier_policy_1993; @sabatier_advocacy_2007]. A second argument of
+the ACF, is that policy actors in subsystems are best understood as
+acting within coalitions that are bound together by policy core beliefs
+and coordinate their actions. Applied to the ACF, the issue definition model could establish shared policy core beliefs by determining which dimensions are
+highlighted by the same policy actors, _assuming that the highlighting of a particular dimension or set of dimensions by a policy actor is evidence of policy core beliefs_. This would be similar to the approach used by @jenkins-smith_explaining_1991 and @jenkins-smith_politics_1993 that used testimony at Congressional hearing to determine the make-up of advocacy coalitions. Therefore, the IDM would be best suited to determine coalition memberships over time based on expressed policy core beliefs occurring in forums that are carefully documented.
+
+```{r, include=FALSE}
+postscript("dimgraphs.eps",horizontal
+        = FALSE, onefile = FALSE, paper = "special", width=8,height=8)
+par(mfrow=c(3,3))
+plot(jitter(hearingsDAT$Year,factor=2), jitter(hearingsDAT$program, factor=2),
+     ylim=c(0,1), xlim=c(1975,2012),
+     xlab="",
+     ylab="",
+     main="Programmatic",
+     col="gray")
+lines(lowess(hearingsDAT$Year, hearingsDAT$program))
+plot(jitter(hearingsDAT$Year,factor=2), jitter(hearingsDAT$safe, factor=2),
+     ylim=c(0,1), xlim=c(1975,2012),
+     xlab="",
+     ylab="",
+     main="Safety/Regulation",
+     col="gray")
+lines(lowess(hearingsDAT$Year, hearingsDAT$safe))
+plot(jitter(hearingsDAT$Year,factor=2), jitter(hearingsDAT$yucca, factor=2),
+     ylim=c(0,1), xlim=c(1975,2012), xlab="",
+     ylab="",
+     main="Yucca Mountain",
+     col="gray")
+lines(lowess(hearingsDAT$Year, hearingsDAT$yucca))
+plot(jitter(hearingsDAT$Year,factor=2), jitter(hearingsDAT$problem, factor=2),
+     ylim=c(0,1), xlim=c(1975,2012), xlab="",
+     ylab="",
+     main="Site Selection",
+     col="gray")
+lines(lowess(hearingsDAT$Year, hearingsDAT$problem))
+plot(jitter(hearingsDAT$Year,factor=2), jitter(hearingsDAT$sci, factor=2),
+     ylim=c(0,1), xlim=c(1975,2012), xlab="",
+     ylab="",
+     main="Science/Technical",
+     col="gray")
+lines(lowess(hearingsDAT$Year, hearingsDAT$sci))
+plot(jitter(hearingsDAT$Year,factor=2), jitter(hearingsDAT$storage, factor=2),
+     ylim=c(0,1), xlim=c(1975,2012), xlab="",
+     ylab="",
+     main="Storage",
+     col="gray")
+lines(lowess(hearingsDAT$Year, hearingsDAT$storage))
+plot(jitter(hearingsDAT$Year,factor=2), jitter(hearingsDAT$trans, factor=2),
+     ylim=c(0,1), xlim=c(1975,2012), xlab="",
+     ylab="",
+     main="Transportation",
+     col="gray")
+lines(lowess(hearingsDAT$Year, hearingsDAT$trans))
+dev.off()
+```
+
+\afterpage{
+\begin{figure}[!htp]
+\centering
+\caption{Dimension Proportions by Year}
+\label{fig:dimst}
+ \includegraphics[width=6in,height=6in]{dimgraphs.eps}
+\end{figure}
+\clearpage
+}
+
+\afterpage{
+\begin{table}
+\begin{center}
+\caption{Dimensions of Used Nuclear Fuel and the Terms Most Associated
+with each Dimension \label{tab:dims}}
+\begin{tabular}{ l | p{9cm} }
+\hline
+\textbf{Dimensions} & \textbf{Terms} \\
+\hline
+\multirow{5}{*}{Programmatic} &
+site, program, DOE, repositori, act, process, review, plan, licens,
+NRC, polici, issu, public, character,
+decis, propos, provid, recommend, technic, requir, commiss, depart,
+concern, comment, develop, environment,
+particip, final, manag, feder\\
+\hline
+\multirow{5}{*}{Safety/Regulation} &
+radioact, dispos, highlevel, EPA, environment, standard, lowlevel,
+develop, materi, program,
+manag, radiat, protect, level, oper, dump, research, public, erda,
+contain, ocean, product, uranium,
+futur, intern, agenc, activ, unit, regul, requir \\
+\hline
+\multirow{5}{*}{Yucca Mountain} & DOE, program, mountain, yucca, fund,
+nevada, project, 
+repositori, depart, issu, energi, cost, board, continu, billion,
+scientif, act, report, court, site, current, million, util, begin,
+secretari, applic, nation, polici, manag, meet \\
+\hline
+\multirow{4}{*}{Site Selection} & site, nation, senat, energi, time, process, concern,
+polit, feel, depart, repres, hear, bill, tri, countri, legisl,
+governor, issu, nevada, citizen, reason, land, simpli, decis, happen,
+suggest, hope, govern, serious, talk \\
+\hline
+\multirow{5}{*}{Scientific/Technical} & repositiori, site, geolog, studi, test, time,
+data, system, technic, develop, water, salt, dispos, evalu, design,
+potenti, rock, form, isol, requir, program, perform, activ, investig,
+result, process, environ, concept, research, suitabl \\
+\hline
+\multirow{5}{*}{Storage} & storag, facil, reactor, manag, dispos, feder, power, plant,
+oper, reprocess, util, govern, energi, cost, interim, provid,
+industri, commerci, perman, capac, polici, develop, licens, nation,
+technolog, electr, time, generat, store, administr \\
+\hline
+\multirow{5}{*}{Transportation} & transport, materi, local, shipment, respons, safeti,
+regul, feder, radioact, citi, cask, counti, hazard, accid, public,
+health, rout, govern, risk, depart, nrc, requir, communiti, york,
+ship, propos, concern, impact, emerg, involv \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+\clearpage
+}
+
+\afterpage{
+\begin{table}[ht]
+\begin{center}
+\caption{Descriptive Statistics of UNF Dimensions\label{tab:desc}}
+\begin{tabular}{l | c | c | c | c | c }
+\hline
+ \textbf{Dimension} & \textbf{Mean} & \textbf{sd} & \textbf{Min} & \textbf{Median} & \textbf{Max} \\ 
+  \hline
+Programmatic & 0.199 & 0.154 & 0.007 & 0.148 & 0.797 \\
+Safety/Regulation & 0.114 & 0.112 & 0.012 & 0.073 & 0.747 \\ 
+Yucca Mountain & 0.137 & 0.116 & 0.008 & 0.095 & 0.743 \\
+Site Selection & 0.166 & 0.120 & 0.010 & 0.137 & 0.588 \\ 
+Science/Technical & 0.127 & 0.109 & 0.012 & 0.091 & 0.818 \\ 
+Storage & 0.144 & 0.124 & 0.010 & 0.101 & 0.705 \\ 
+Transportation & 0.113 & 0.124 & 0.013 & 0.070 & 0.737 \\
+\hline 
+  \end{tabular}
+\end{center}
+\end{table}
+\clearpage
+}
+
+```{r, include=FALSE}
+source("OLScode.R")
+install.packages("apsrtable", dependencies=TRUE, repos='http://cran.us.r-project.org')
+library(apsrtable)
+apsrtable(olsTS1,olsTS2,olsTS3,olsTS4,olsTS5,olsTS6,olsTS7, stars="default", model.names=c("Program","Safety","Yucca","Site","Sci/Tech","Storage","Trans"), coef.names=c("Intercept","NWPA", "NWPAA"), caption="Salience of the Dimensions following Policy Change", label="tab:dimsal")
+```
+
+\afterpage{
+\begin{table}[!htp]
+\centering
+\caption{Salience of the Dimensions following Policy Change}
+\label{tab:dimsal} 
+\begin{tabular}{ l D{.}{.}{2}D{.}{.}{2}D{.}{.}{2}D{.}{.}{2}D{.}{.}{2}D{.}{.}{2}D{.}{.}{2} } 
+\hline 
+  & \multicolumn{ 1 }{ c }{ Program } & \multicolumn{ 1 }{ c }{ Safety } & \multicolumn{ 1 }{ c }{ Yucca } & \multicolumn{ 1 }{ c }{ Site } & \multicolumn{ 1 }{ c }{ Sci/Tech } & \multicolumn{ 1 }{ c }{ Storage } & \multicolumn{ 1 }{ c }{ Trans } \\ \hline
+ %            & Program      & Safety       & Yucca        & Site         & Sci/Tech     & Storage      & Trans       \\ 
+Intercept    & 0.18 ^{***}  & 0.19 ^{***}  & 0.06 ^*      & 0.13 ^{***}  & 0.15 ^{***}  & 0.19 ^{***}  & 0.10 ^{***} \\ 
+             & (0.02)       & (0.02)       & (0.03)       & (0.02)       & (0.01)       & (0.03)       & (0.02)      \\ 
+NWPA         & 0.11 ^{**}   & -0.12 ^{***} & 0.04         & 0.08 ^*      & -0.00        & -0.12 ^*     & 0.00        \\ 
+             & (0.04)       & (0.03)       & (0.05)       & (0.03)       & (0.02)       & (0.05)       & (0.04)      \\ 
+NWPAA        & -0.03        & -0.11 ^{***} & 0.21 ^{***}  & -0.00        & -0.05 ^{**}  & -0.03        & 0.01        \\ 
+             & (0.03)       & (0.02)       & (0.03)       & (0.02)       & (0.01)       & (0.04)       & (0.03)       \\
+ $N$          & 35           & 35           & 35           & 35           & 35           & 35           & 35          \\ 
+adj. $R^2$   & 0.34         & 0.45         & 0.55         & 0.18         & 0.23         & 0.10         & -0.06       \\ 
+Resid. sd    & 0.06         & 0.05         & 0.08         & 0.06         & 0.04         & 0.09         & 0.07         \\ \hline
+ \multicolumn{8}{l}{\footnotesize{Standard errors in parentheses}}\\
+\multicolumn{8}{l}{\footnotesize{$^\dagger$ significant at $p<.10$; $^* p<.05$; $^{**} p<.01$; $^{***} p<.001$}} 
+\end{tabular} 
+ \end{table}
+}
+
+
+\newpage
+
+# References
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+\vspace*{-0.2in}
+\singlespace
+\noindent
+
+
+
+
